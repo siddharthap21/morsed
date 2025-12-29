@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MORSED - SID</title>
+    <style>
+        :root {
+            --bg-color: #B5D2AD; /* Green Theme Default */
+            --box-bg: #ffffff;
+            --text-color: #000000;
+            --border: 3px solid #000000;
+            --shadow: 8px 8px 0px #000000;
+            --accent-purple: #C4A1FF;
+            --accent-green: #B5D2AD;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.1s; /* Handled by JS animation mostly */
+            overflow: hidden; /* For the ripple effect */
+        }
+
+        /* The Main 3D Box */
+        .main-container {
+            background: var(--box-bg);
+            border: var(--border);
+            box-shadow: var(--shadow);
+            width: 90%;
+            max-width: 900px;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            border: var(--border);
+            padding: 10px;
+            font-weight: 900;
+            font-size: 2rem;
+            letter-spacing: 5px;
+            background: #fff;
+            box-shadow: 4px 4px 0px #000;
+            text-transform: uppercase;
+        }
+
+        /* Content Layout */
+        .content-wrapper {
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Left Section (Inputs) */
+        .left-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            border: var(--border);
+            padding: 10px;
+            font-size: 1.2rem;
+            resize: none;
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+
+        textarea:focus {
+            outline: none;
+            background: #fff;
+        }
+
+        /* Swap Button Area */
+        .swap-container {
+            display: flex;
+            justify-content: center;
+            margin: -10px 0; /* Tighten gap */
+            z-index: 20;
+        }
+
+        .swap-btn {
+            background: #fff;
+            border: var(--border);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            transition: transform 0.2s;
+            box-shadow: 3px 3px 0px #000;
+        }
+
+        .swap-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
+        /* Button Row (C, D, E) */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 15px;
+            border: var(--border);
+            background: #fff;
+            font-weight: 900;
+            font-size: 1.2rem;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px #000;
+            transition: all 0.1s;
+            position: relative;
+        }
+
+        .action-btn:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #000;
+        }
+
+        .action-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
+        /* Right Section (Chart) */
+        .right-panel {
+            flex: 1;
+            border: var(--border);
+            background: #fff;
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            box-shadow: 4px 4px 0px #000;
+        }
+
+        .chart-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 2px solid #000;
+            padding: 5px 0;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Sound Settings Popup */
+        .sound-popup {
+            position: absolute;
+            bottom: 80px; /* Above buttons */
+            left: 33%;
+            width: 250px;
+            background: #fff;
+            border: var(--border);
+            padding: 15px;
+            box-shadow: 6px 6px 0px #000;
+            display: none;
+            z-index: 100;
+        }
+
+        .sound-popup.active {
+            display: block;
+        }
+
+        .slider-group {
+            margin-bottom: 10px;
+        }
+
+        .slider-group label {
+            display: block;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        input[type=range] {
+            width: 100%;
+            height: 10px;
+            background: #000;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border: 2px solid #000;
+            cursor: pointer;
+        }
+
+        /* Signature */
+        .signature {
+            text-align: right; font-weight: 900; font-size: 1.5rem; margin-top: 10px;
+        }
+
+        /* Circle Reveal Animation */
+        .reveal-circle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.6s ease-in-out;
+            z-index: 5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content-wrapper {
+                flex-direction: column;
+            }
+            .right-panel {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="reveal" class="reveal-circle"></div>
+
+    <div class="main-container">
+        <header>MORSED</header>
+
+        <div class="content-wrapper">
+            <div class="left-panel">
+                
+                <div class="input-group">
+                    <textarea id="inputA" placeholder="TYPE ENGLISH HERE..."></textarea>
+                </div>
+
+                <div class="swap-container">
+                    <button class="swap-btn" id="swapBtn">⇅</button>
+                </div>
+
+                <div class="input-group">
+                    <textarea id="outputB" placeholder="MORSE OUTPUT..." readonly></textarea>
+                </div>
+
+                <div class="controls">
+                    <button class="action-btn" id="btnC">COPY</button>
+                    <button class="action-btn" id="btnD">SOUND</button>
+                </div>
+
+                <div class="sound-popup" id="soundSettings">
+                    <div class="slider-group">
+                        <label>SPEED: <span id="valSpeed">20</span> WPM</label>
+                        <input type="range" id="rngSpeed" min="5" max="60" value="20">
+                    </div>
+                    <div class="slider-group">
+                        <label>PITCH: <span id="valPitch">600</span> Hz</label>
+                        <input type="range" id="rngPitch" min="300" max="800" value="600">
+                    </div>
+                    <div class="slider-group">
+                        <label>VOLUME: <span id="valVol">50</span>%</label>
+                        <input type="range" id="rngVol" min="0" max="100" value="50">
+                    </div>
+                    <button class="action-btn" id="playBtn" style="margin-top:5px; font-size: 0.8rem; padding: 5px;">▶ PLAY</button>
+                </div>
+
+                <div class="signature">SID</div>
+            </div>
+
+            <div class="right-panel" id="chartContainer">
+                <h3>CHART</h3>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        const morseCode = {
+            'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+            'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+            'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+            'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+            'Y': '-.--', 'Z': '--..', '1': '.----', '2': '..---', '3': '...--',
+            '4': '....-', '5': '.....', '6': '-....', '7': '--...', '8': '---..',
+            '9': '----.', '0': '-----', ' ': '/'
+        };
+        const revMorseCode = Object.fromEntries(Object.entries(morseCode).map(a => a.reverse()));
+
+        // Elements
+        const inputA = document.getElementById('inputA');
+        const outputB = document.getElementById('outputB');
+        const swapBtn = document.getElementById('swapBtn');
+        const chartContainer = document.getElementById('chartContainer');
+        const reveal = document.getElementById('reveal');
+        const soundPopup = document.getElementById('soundSettings');
+        
+        // Settings
+        let isTextToMorse = true;
+        let audioCtx = null;
+        let isPlaying = false;
+
+        // Init Chart
+        for(let key in morseCode) {
+            if (key === ' ') continue;
+            let div = document.createElement('div');
+            div.className = 'chart-item';
+            div.innerHTML = `<span>${key}</span><span>${morseCode[key]}</span>`;
+            chartContainer.appendChild(div);
+        }
+
+        // Translation Logic
+        function translate() {
+            const text = inputA.value.toUpperCase();
+            if (isTextToMorse) {
+                outputB.value = text.split('').map(char => morseCode[char] || char).join(' ');
+            } else {
+                // Heuristic for morse to text
+                outputB.value = text.split(' ').map(code => revMorseCode[code] || code).join('');
+            }
+        }
+
+        inputA.addEventListener('input', translate);
+
+        // Swap Logic with Animation
+        swapBtn.addEventListener('click', (e) => {
+            // 1. Position circle at button
+            const rect = swapBtn.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            
+            reveal.style.left = x + 'px';
+            reveal.style.top = y + 'px';
+            
+            // 2. Determine colors
+            const nextColor = isTextToMorse ? '#C4A1FF' : '#B5D2AD'; // Purple if going to T->M (swapped), Green if back
+            
+            reveal.style.backgroundColor = nextColor;
+            reveal.style.width = '10px';
+            reveal.style.height = '10px';
+            reveal.style.transform = 'translate(-50%, -50%) scale(1)';
+            
+            // 3. Expand
+            // Calculate scale needed to cover screen
+            const maxDim = Math.max(window.innerWidth, window.innerHeight);
+            const finalScale = (maxDim / 10) * 2.5; // multiplier to ensure coverage
+            
+            requestAnimationFrame(() => {
+                reveal.style.transform = `translate(-50%, -50%) scale(${finalScale})`;
+            });
+
+            // 4. Logic Change after animation covers screen (approx 300ms in)
+            setTimeout(() => {
+                isTextToMorse = !isTextToMorse;
+                document.documentElement.style.setProperty('--bg-color', nextColor);
+                
+                // Swap placeholders and values
+                let tempVal = inputA.value;
+                inputA.value = outputB.value;
+                outputB.value = tempVal; // Usually we might want to re-translate, but swapping content is standard
+                
+                inputA.placeholder = isTextToMorse ? "TYPE ENGLISH HERE..." : "TYPE MORSE HERE...";
+                outputB.placeholder = isTextToMorse ? "MORSE OUTPUT..." : "ENGLISH OUTPUT...";
+                inputA.readOnly = false;
+                outputB.readOnly = true;
+
+                // Reset Chart visuals if needed (optional)
+            }, 300);
+
+            // 5. Reset Reveal
+            setTimeout(() => {
+                reveal.style.transition = 'none';
+                reveal.style.transform = 'translate(-50%, -50%) scale(0)';
+                setTimeout(() => { reveal.style.transition = 'transform 0.6s ease-in-out'; }, 50);
+            }, 700);
+        });
+
+        // Copy (Section C)
+        document.getElementById('btnC').addEventListener('click', () => {
+            navigator.clipboard.writeText(outputB.value);
+            const originalText = document.getElementById('btnC').innerText;
+            document.getElementById('btnC').innerText = "COPIED!";
+            setTimeout(() => document.getElementById('btnC').innerText = originalText, 1000);
+        });
+
+        // Sound Toggle (Section D)
+        document.getElementById('btnD').addEventListener('click', () => {
+            soundPopup.classList.toggle('active');
+        });
+
+        // Update Slider Labels
+        ['Speed', 'Pitch', 'Vol'].forEach(type => {
+            document.getElementById(`rng${type}`).addEventListener('input', (e) => {
+                document.getElementById(`val${type}`).innerText = e.target.value;
+            });
+        });
+
+
+        // Audio Logic
+        document.getElementById('playBtn').addEventListener('click', async () => {
+            if (isPlaying) return;
+            isPlaying = true;
+
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            const wpm = parseInt(document.getElementById('rngSpeed').value);
+            const freq = parseInt(document.getElementById('rngPitch').value);
+            const vol = parseInt(document.getElementById('rngVol').value) / 100;
+            
+            // Standard Morse Timing (Paris standard)
+            // Dot = 1 unit
+            // Dash = 3 units
+            // Space betw parts = 1 unit
+            // Space betw letters = 3 units
+            // Space betw words = 7 units
+            
+            // 1 unit in seconds = 1.2 / wpm
+            const unit = 1.2 / wpm; 
+            
+            const textToPlay = isTextToMorse ? outputB.value : inputA.value; // Always play the Morse part
+            const cleanMorse = textToPlay.replace(/[^.\- /]/g, '');
+
+            let time = audioCtx.currentTime + 0.1;
+
+            for (let char of cleanMorse) {
+                if (char === '.') {
+                    playTone(time, unit, freq, vol);
+                    time += unit * 2; // tone + gap
+                } else if (char === '-') {
+                    playTone(time, unit * 3, freq, vol);
+                    time += unit * 4; // tone(3) + gap(1)
+                } else if (char === ' ' || char === '/') {
+                    time += unit * 3; // Medium gap
+                }
+            }
+            
+            setTimeout(() => { isPlaying = false; }, (time - audioCtx.currentTime) * 1000);
+        });
+
+        function playTone(startTime, duration, freq, vol) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(vol, startTime);
+            gain.gain.setValueAtTime(0, startTime + duration - 0.01); // Quick fade out to prevent clicking
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+    </script>
+</body>
+</html>
